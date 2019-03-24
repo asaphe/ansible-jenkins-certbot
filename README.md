@@ -2,6 +2,8 @@
 
 Install Jenkins on a Ubuntu server.  
 
+* OS: Ubuntu 16.04+  
+
 **AWS ROUTE-53 & CERTBOT**
 
 The assumption is that AWS credentials exists in the environment (IAM Instance role or any boto auth method)
