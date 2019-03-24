@@ -1,0 +1,63 @@
+---
+jenkins_dns_record: "{{ jenkins.dns }}"
+jenkins_selfsigned: "{{ jenkins.self_signed_cert }}"
+
+base_plugins:
+  - ansible
+  - ansicolor
+  - audit-trail
+  - build-timeout
+  - build-token-root
+  - build-user-vars-plugin
+  - cloudbees-folder
+  - credentials-plugin
+  - configurationslicing
+  - docker-workflow
+  - durable-task
+  - ssh-agent
+  - saml
+  - slack
+  - simple-theme-plugin
+  - role-strategy
+  - rebuild
+  - jobConfigHistory
+  - timestamper
+  - purge-build-queue-plugin
+  - workflow-aggregator
+
+gauth_plugins:
+  - google-login
+  - google-oauth-plugin
+
+monitoring_plugins:
+  - datadog
+  - sumologic-publisher
+
+git_plugins:
+  - git
+  - github
+  - github-api
+  - github-branch-source
+  - github-oauth
+
+amzn_plugins:
+  - aws-credentials
+  - amazon-ecr
+
+ec2_plugins:
+  - ec2-fleet
+  - ec2
+
+k8s_plugins:
+  - kubernetes
+  - kubernetes-cd
+  - kubernetes-cli
+  - kubernetes-credentials-provider-plugin
+  - kubernetes-pipeline-steps
+
+letsencrypt_live_base_path: /etc/letsencrypt/live/
+
+cloudflare:
+  credentialsfile: "~/.secrets/certbot/cloudflare.ini"
+  apitoken: "{{ lookup('pipe', 'credstash -t ' + credstash_devops_table + ' -p ' + credstash_aws_profile + ' get cloudflare_token') }}"
+  registrar: 'dev@example.com'

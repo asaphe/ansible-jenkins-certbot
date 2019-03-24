@@ -1,0 +1,28 @@
+---
+  - block:
+      - name: Add jenkins.io key
+        apt_key:
+          url: "https://pkg.jenkins.io/debian/jenkins-ci.org.key"
+          state: present
+
+      #ignoring error because it can't seem to start fast enough
+      - name: Add jenkins.io repo
+        apt_repository:
+          repo: "deb https://pkg.jenkins.io/debian-stable binary/"
+        ignore_errors: yes
+
+      - name: install Jenkins
+        apt:
+          name: "{{ jenkins_pkg_name|default('jenkins') }}"
+          state: "{{ jenkins_pkg_state|default('present') }}"
+
+      - service: name=jenkins state=started enabled=yes
+
+      - name: Add Jenkins to docker group
+        user:
+          name: jenkins
+          shell: /bin/bash
+          groups: docker
+          append: yes
+
+    become: true
