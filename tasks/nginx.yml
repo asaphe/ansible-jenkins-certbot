@@ -1,0 +1,68 @@
+---
+  - name: nginx installation
+    block:
+      - name: install nginx [latest]
+        apt:
+          name: nginx
+          state: latest
+
+      - name: remove nginx default site
+        file:
+          path: ['/etc/nginx/sites-available/default.conf', '/etc/nginx/sites-enabled/default']
+          state: absent
+
+      - name: www-data chown /etc/nginx
+        file:
+          path: /etc/nginx
+          group: www-data
+          owner: www-data
+          recurse: true
+
+      - name: enable and stop nginx.service
+        service:
+          name: nginx
+          state: stopped
+          enabled: yes
+
+    become: true
+    tags: [jenkins.nginx.installation]
+
+  - name: nginx site and certificate configurations
+    block:
+      - name: NGINX Certbot Cloudflare
+        include_tasks: nginx_certbot_cloudflare.yml
+        when: certbot_cloudflare|default(False)
+        tags: [jenkins.nginx.sites.certbot]
+
+      - name: NGINX Certbot Route53
+        include_tasks: nginx_certbot_r53.yml
+        when: certbot_route53|default(False)
+        tags: [jenkins.nginx.sites.standalone]
+
+      - name: NGINX Self-Signed Certificate
+        include_tasks: nginx_selfsigned.yml
+        when: jenkins_selfsigned|default(False)
+        tags: [jenkins.nginx.sites.standalone]
+
+      - name: RENEW Certbot Certificate
+        shell: certbot renew --pre-hook "service nginx stop" --post-hook "service nginx start"
+        when: certbot_renew|default(False)
+
+    become: true
+    tags: [jenkins.nginx.sites]
+
+  - name: enable the jenkins site and restart nginx
+    block:
+      - name: link the jenkins site config available-enabled
+        file:
+          src: /etc/nginx/sites-available/jenkins.conf
+          dest: /etc/nginx/sites-enabled/jenkins
+          state: link
+          group: www-data
+
+      - name: restart nginx.service
+        service:
+          name: nginx
+          state: restarted
+
+    become: true

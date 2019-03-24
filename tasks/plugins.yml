@@ -1,0 +1,15 @@
+---
+  - block:
+        #must be run on jenkins
+      - name: Install Jenkins Plugins
+        jenkins_plugin:
+          name: "{{ item }}"
+        with_items: 
+          - "{{ base_plugins }}"
+          - "{{ amzn_plugins }}"
+          - "{{ git_plugins }}"
+          - "{{ k8s_plugins }}"
+          - "{{ monitoring_plugins }}"
+          - "{{ ec2_plugins }}"
+          - "{{ gauth_plugins }}"
+    become: true

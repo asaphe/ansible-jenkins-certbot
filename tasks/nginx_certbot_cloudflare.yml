@@ -1,0 +1,60 @@
+---
+  - name: install certbot
+    block:
+      - name: Make sure pip is latest
+        pip:
+          name: pip
+          state: latest
+
+      - name: Install certbot with certbot-nginx,certbot-dns-cloudflare plugins
+        pip:
+          name: ['certbot','certbot-nginx','certbot-dns-cloudflare', 'cryptography>=2.3']
+          state: latest # Does not conflict with specifying a version
+
+  - name: running certbot with dns-cloudflare plugin
+    block:
+      - name: create cloudflare secrets directory
+        file:
+          path: "{{ cloudflare.credentialsfile | basename }}"
+          state: directory
+
+      - name: "template {{ cloudflare.credentialsfile }}"
+        template:
+          src: templates/cloudflare.j2
+          dest: "{{ cloudflare.credentialsfile }}"
+          mode: '600'
+
+      - name: Generate SSL
+        shell: certbot certonly --dns-cloudflare --dns-cloudflare-credentials {{ cloudflare.credentialsfile }} --agree-tos --non-interactive -d {{ jenkins_dns_record }}
+
+      - name: ensure www-data can read the certificates
+        file:
+          path: "{{ item }}"
+          group: www-data
+        with_items:
+          - "{{ letsencrypt_live_base_path }}{{ jenkins_dns_record }}/fullchain.pem"
+          - "{{ letsencrypt_live_base_path }}{{ jenkins_dns_record }}/privkey.pem"
+
+      - name: create auto-renew task
+        cron:
+          name: "certbot auto renew"
+          job: "certbot renew --non-interactive --post-hook 'service nginx reload'"
+          day: 1
+          hour: 3
+
+      - name: remove cloudflare credentials
+        file:
+          path: "{{ cloudflare.credentialsfile }}"
+          state: absent
+
+  - name: jenkins site setup with a certbot certificate
+    block:
+      - name: concate certificates (avoid errors with curl)
+        command: "cat {{letsencrypt_live_base_path}}{{ jenkins_dns_record }}/{cert*.pem,chain*.pem,fullchain*.pem} > {{letsencrypt_live_base_path}}{{ jenkins_dns_record }}/concated_cert.pem"
+
+      - name: template nginx jenkins site
+        template:
+          src: templates/jenkins_certbot.j2
+          dest: /etc/nginx/sites-available/jenkins.conf
+          group: www-data
+          mode: 0770

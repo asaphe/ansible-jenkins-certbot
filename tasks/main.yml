@@ -1,0 +1,21 @@
+---
+  - name: apt update cache and clean
+    apt:
+      update_cache: yes
+      autoremove: yes
+      autoclean: yes
+
+  - include: java.yml
+    tags: [jenkins.java]
+
+  - include: install.yml
+    tags: [jenkins.install]
+
+  - include: configure.yml
+    tags: [jenkins.configure]
+
+  - include: plugins.yml
+    tags: [jenkins.plugins]
+
+  - include: nginx.yml
+    tags: [jenkins.install, jenkins.nginx]

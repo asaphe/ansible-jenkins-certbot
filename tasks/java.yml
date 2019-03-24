@@ -1,0 +1,8 @@
+---
+  - block:
+      - name: Install java
+        apt:
+          name: "{{ java_pkg_name |default('openjdk-8-jdk') }}"
+          state: "{{ java_pkg_state |default('present') }}"
+
+    become: true

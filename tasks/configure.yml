@@ -1,0 +1,12 @@
+- block:
+    - name: configure Jenkins Java
+      shell: find /etc/default -type f -iname "jenkins" -exec sed -i 's/^JAVA_ARGS.*/{{ JAVA_ARGS }}/g' {} \;
+      vars:
+        JAVA_ARGS: "JAVA_ARGS=\"-Xmx2g -XX:+UseConcMarkSweepGC -Djava.awt.headless=true -Djenkins.install.runSetupWizard=false -Dhudson.DNSMultiCast.disabled=true -Dsun.net.inetaddr.ttl=60 -Duser.timezone=UTC\""
+
+    - name: disable security
+      shell: find /var/lib/jenkins -type f -iname "config.xml" -exec sed -i 's/<useSecurity>true<\/useSecurity>/<useSecurity>false<\/useSecurity>/g' {} \;
+
+    - service: name=jenkins state=restarted
+
+  become: true

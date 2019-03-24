@@ -1,0 +1,27 @@
+---
+  - name: jenkins site setup with a self-signed certificate
+    block:
+      - name: create nginx ssl directory
+        file:
+          path: /etc/nginx/ssl
+          state: directory
+          group: www-data
+
+      - name: create nginx ssl self-signed certificate
+        copy:
+          content: "{{ jenkins.ssl_certificate }}"
+          dest: "/etc/nginx/ssl/nginx.crt"
+          group: www-data
+
+      - name: create nginx ssl key
+        copy:
+          content: "{{ jenkins.ssl_key }}"
+          dest: "/etc/nginx/ssl/nginx.ssl"
+          group: www-data
+
+      - name: template nginx jenkins site
+        template:
+          src: templates/jenkins_selfsigned.j2
+          dest: /etc/nginx/sites-available/jenkins.conf
+          group: www-data
+          mode: 0770
